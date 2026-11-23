@@ -4,6 +4,7 @@
   "side": "bid",
   "baseTimeframe": "15m",
   "timezone": "UTC",
-  "months": []
+  "months": [
+    "2024-05"
+  ]
 }
-
