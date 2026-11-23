@@ -1,1 +1,9 @@
+{
+  "symbol": "XAUUSD",
+  "source": "Dukascopy",
+  "side": "bid",
+  "baseTimeframe": "15m",
+  "timezone": "UTC",
+  "months": []
+}
 
