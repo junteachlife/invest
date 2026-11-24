@@ -1,56 +1,42 @@
-name: 建立黃金歷史資料
+name: 匯入黃金 CSV（403 備援）
 on:
   workflow_dispatch:
     inputs:
-      from_month:
-        description: "開始月份（例：2024-05）"
+      month:
+        description: '要匯入的月份（例如 2025-01）'
         required: true
-        default: "2024-05"
-      to_month:
-        description: "結束月份（例：2024-05；一次最多12個月）"
-        required: true
-        default: "2024-05"
-  schedule:
-    - cron: '25 5 * * 1'
+        default: '2025-01'
 permissions:
   contents: write
 concurrency:
   group: gold-historical-data
   cancel-in-progress: false
 jobs:
-  update:
+  import:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Download and convert (manual)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Convert official CSV to monthly JSON
         env:
-          START: ${{ inputs.from_month }}
-          END: ${{ inputs.to_month }}
-        run: python build_data.py --from-month "$START" --to-month "$END"
-      - name: Download and convert (weekly current/previous month)
-        if: github.event_name == 'schedule'
-        run: python build_data.py --recent
-      - name: Commit changed market data
+          MONTH: ${{ inputs.month }}
+        shell: bash
+        run: |
+          python import_gold_csv.py "imports/xauusd/${MONTH}.csv" --month "$MONTH"
+      - name: Commit monthly historical candles
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data/xauusd
           if git diff --cached --quiet; then
-            echo 'No changed data'
+            echo 'No data changes'
           else
-            git commit -m 'Update XAUUSD replay historical data'
+            git commit -m 'Import XAUUSD history from official CSV'
             git push
           fi
